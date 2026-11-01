@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Administrator</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        body { font-family: system-ui, sans-serif; background: #f9fafb; padding: 20px; }
+        .card { background: white; max-width: 500px; margin: 0 auto; padding: 30px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        input, button { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; }
+        button { background: #10b981; color: white; border: none; font-weight: bold; cursor: pointer; }
+        button:hover { background: #059669; }
+        .data-box { background: #f3f4f6; padding: 15px; margin-top: 15px; border-radius: 8px; }
+    </style>
+</head>
+<body>
+    <div class="card" id="adminPanel" style="display:none;">
+        <h2>Buat Pertanyaan Anak</h2>
+        <input type="text" id="namaAnak" placeholder="Nama Anak (Contoh: Gendis)">
+        <input type="text" id="pertanyaan" placeholder="Pertanyaan">
+        <input type="text" id="jawabanAdmin" placeholder="Jawaban Benar">
+        <button onclick="buatPertanyaan()">Simpan Pertanyaan</button>
+        <p id="status"></p>
+
+        <h3 style="margin-top:30px;">Daftar Jawaban Anak</h3>
+        <button onclick="muatData()" style="background:#6b7280;">Refresh Data</button>
+        <div id="listData"></div>
+    </div>
+
+    <script>
+        const password = prompt("Masukkan password administrator:");
+        if (password === "admin123") {
+            document.getElementById('adminPanel').style.display = 'block';
+        } else {
+            document.body.innerHTML = "<h2 style='text-align:center;'>Akses Ditolak</h2>";
+        }
+
+        const supabaseUrl = 'https://uyqloxzcykyswrdxnhla.supabase.co';
+        const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV5cWxveHpjeWt5c3dyZHhuaGxhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQ2NTA3MjQsImV4cCI6MjEwMDIyNjcyNH0.lNJWGPYYMFw2_1dLV7pzjM9YIH0cbcFdtKRD5wuQZa4';
+        const db = supabase.createClient(supabaseUrl, supabaseKey);
+
+        async function buatPertanyaan() {
+            const nama = document.getElementById('namaAnak').value;
+            const pertanyaan = document.getElementById('pertanyaan').value;
+            const jawaban_admin = document.getElementById('jawabanAdmin').value;
+
+            const { error } = await db
+                .from('qna')
+                .insert([{ nama, pertanyaan, jawaban_admin }]);
+
+            if (!error) {
+                document.getElementById('status').innerText = "Berhasil disimpan!";
+                document.getElementById('namaAnak').value = '';
+                document.getElementById('pertanyaan').value = '';
+                document.getElementById('jawabanAdmin').value = '';
+                muatData();
+            }
+        }
+
+        async function muatData() {
+            const { data, error } = await db.from('qna').select('*').order('id', { ascending: false });
+            let html = "";
+            if (data) {
+                data.forEach(item => {
+                    html += `
+                    <div class="data-box">
+                        <strong>${item.nama}</strong> <br>
+                        Tanya: ${item.pertanyaan} <br>
+                        Kunci: ${item.jawaban_admin} <br>
+                        <em>Jawaban Anak: ${item.jawaban_anak || '- belum dijawab -'}</em>
+                    </div>`;
+                });
+            }
+            document.getElementById('listData').innerHTML = html;
+        }
+
+        if (password === "admin123") muatData();
+    </script>
+</body>
+</html>

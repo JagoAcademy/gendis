@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Web Keluarga</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        body { font-family: system-ui, sans-serif; background: #f9fafb; padding: 20px; text-align: center; }
+        .card { background: white; max-width: 400px; margin: 0 auto; padding: 30px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        input, button { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; }
+        button { background: #3b82f6; color: white; border: none; font-weight: bold; cursor: pointer; }
+        button:hover { background: #2563eb; }
+        #qna-section { display: none; }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <h1>Halo Gendis, Zayn, Akmal</h1>
+        
+        <div id="login-section">
+            <h3>Masuk</h3>
+            <input type="text" id="namaAnak" placeholder="Ketik namamu di sini...">
+            <button onclick="masuk()">Masuk</button>
+            <p id="errorLogin" style="color: red;"></p>
+        </div>
+
+        <div id="qna-section">
+            <h3 id="pertanyaanText"></h3>
+            <input type="text" id="jawabanAnak" placeholder="Kolom jawaban...">
+            <button onclick="kirimJawaban()">Kirim Jawaban</button>
+            <p id="statusPesan" style="color: green; font-weight: bold;"></p>
+        </div>
+    </div>
+
+    <script>
+        const supabaseUrl = 'https://uyqloxzcykyswrdxnhla.supabase.co';
+        const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV5cWxveHpjeWt5c3dyZHhuaGxhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQ2NTA3MjQsImV4cCI6MjEwMDIyNjcyNH0.lNJWGPYYMFw2_1dLV7pzjM9YIH0cbcFdtKRD5wuQZa4';
+        const db = supabase.createClient(supabaseUrl, supabaseKey);
+
+        let rowId = null;
+
+        async function masuk() {
+            const nama = document.getElementById('namaAnak').value.trim();
+            if (!nama) return;
+
+            const { data, error } = await db
+                .from('qna')
+                .select('*')
+                .ilike('nama', nama)
+                .single();
+
+            if (error || !data) {
+                document.getElementById('errorLogin').innerText = "Pertanyaan belum dibuat untuk namamu!";
+            } else {
+                rowId = data.id;
+                document.getElementById('login-section').style.display = 'none';
+                document.getElementById('qna-section').style.display = 'block';
+                document.getElementById('pertanyaanText').innerText = data.pertanyaan;
+            }
+        }
+
+        async function kirimJawaban() {
+            const jawaban = document.getElementById('jawabanAnak').value.trim();
+            const { error } = await db
+                .from('qna')
+                .update({ jawaban_anak: jawaban })
+                .eq('id', rowId);
+
+            if (!error) {
+                document.getElementById('statusPesan').innerText = "Jawaban berhasil dikirim!";
+                document.getElementById('jawabanAnak').value = '';
+            }
+        }
+    </script>
+</body>
+</html>
